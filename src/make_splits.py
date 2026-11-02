@@ -35,8 +35,10 @@ class Dataset:
 DATASETS = {
     # HAM10000 has no patient ID, so lesion_id is the strictest grouping available.
     "ham10000": Dataset("ham10000/HAM10000_metadata.csv", "image_id", "lesion_id", "dx"),
-    # File and column names are unverified until DDI is in data/. Loading fails if they differ.
-    "ddi": Dataset("ddi/ddi_metadata.csv", "DDI_file", "DDI_file", "disease", external_test=True),
+    # PAD-UFES-20 reuses lesion_id values across different patients, so lesion_id cannot be the group.
+    "pad-ufes-20": Dataset("pad-ufes-20/metadata.csv", "img_id", "patient_id", "diagnostic"),
+    # DDI has no patient or lesion ID, and it is never split, so each image is its own group.
+    "ddi": Dataset("ddi/ddi_images/ddi_metadata.csv", "DDI_file", "DDI_file", "disease", external_test=True),
 }
 
 

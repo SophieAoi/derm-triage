@@ -1,8 +1,92 @@
-source_label,condition_group,urgency_tier,rationale,source
-akiec,Actinic keratoses and intraepithelial carcinoma,,,
-bcc,Basal cell carcinoma,,,
-bkl,Benign keratosis-like lesions,,,
-df,Dermatofibroma,,,
-mel,Melanoma,,,
-nv,Melanocytic nevi,,,
-vasc,Vascular lesions,,,
+dataset,source_label,normalised_label,image_count,suggested_condition_group,condition_group,urgency_tier,rationale,source,confidence,suggestion_note
+ddi,acral-melanotic-macule,acral melanotic macule,1,benign melanocytic lesion,,,,,,Suggested group is uncertain.
+ddi,blue-nevus,blue nevus,6,benign melanocytic lesion,,,,,,
+ddi,melanocytic-nevi,melanocytic nevus,119,benign melanocytic lesion,,,,,,
+ham10000,nv,melanocytic nevus,6705,benign melanocytic lesion,,,,,,
+pad-ufes-20,NEV,melanocytic nevus,244,benign melanocytic lesion,,,,,,
+ddi,benign-keratosis,benign keratosis,3,benign keratosis,,,,,,
+ham10000,bkl,benign keratosis,1099,benign keratosis,,,,,,"Label combines solar lentigines, seborrheic keratoses and lichen-planus-like keratoses."
+ddi,clear-cell-acanthoma,clear cell acanthoma,1,benign keratosis,,,,,,
+ddi,inverted-follicular-keratosis,inverted follicular keratosis,5,benign keratosis,,,,,,
+ddi,lichenoid-keratosis,lichenoid keratosis,1,benign keratosis,,,,,,
+ddi,seborrheic-keratosis,seborrheic keratosis,58,benign keratosis,,,,,,
+pad-ufes-20,SEK,seborrheic keratosis,235,benign keratosis,,,,,,
+ddi,seborrheic-keratosis-irritated,"seborrheic keratosis, irritated",14,benign keratosis,,,,,,
+ddi,solar-lentigo,solar lentigo,4,benign keratosis,,,,,,
+ddi,basal-cell-carcinoma,basal cell carcinoma,41,basal cell carcinoma,,,,,,
+ham10000,bcc,basal cell carcinoma,514,basal cell carcinoma,,,,,,
+pad-ufes-20,BCC,basal cell carcinoma,845,basal cell carcinoma,,,,,,
+ddi,basal-cell-carcinoma-nodular,"basal cell carcinoma, nodular",6,basal cell carcinoma,,,,,,
+ddi,basal-cell-carcinoma-superficial,"basal cell carcinoma, superficial",2,basal cell carcinoma,,,,,,
+ddi,melanoma,melanoma,7,melanoma,,,,,,
+ham10000,mel,melanoma,1113,melanoma,,,,,,
+pad-ufes-20,MEL,melanoma,52,melanoma,,,,,,
+ddi,melanoma-in-situ,melanoma in situ,6,melanoma,,,,,,"In situ, so it may not share a tier with invasive melanoma."
+ddi,melanoma-acral-lentiginous,"melanoma, acral lentiginous",7,melanoma,,,,,,
+ddi,nodular-melanoma-(nm),"melanoma, nodular",1,melanoma,,,,,,
+ddi,actinic-keratosis,actinic keratosis,4,actinic keratosis and carcinoma in situ,,,,,,
+pad-ufes-20,ACK,actinic keratosis,730,actinic keratosis and carcinoma in situ,,,,,,
+ham10000,akiec,actinic keratosis and intraepithelial carcinoma,327,actinic keratosis and carcinoma in situ,,,,,,"Label combines actinic keratoses and intraepithelial carcinoma (Bowen's disease), which may not share a tier."
+ddi,squamous-cell-carcinoma-in-situ,squamous cell carcinoma in situ,28,actinic keratosis and carcinoma in situ,,,,,,"In situ, so it may not follow the squamous cell carcinoma route. Suggested group is uncertain."
+ddi,squamous-cell-carcinoma,squamous cell carcinoma,17,squamous cell carcinoma,,,,,,
+pad-ufes-20,SCC,squamous cell carcinoma,192,squamous cell carcinoma,,,,,,Check the dataset paper for whether this label includes Bowen's disease.
+ddi,squamous-cell-carcinoma-keratoacanthoma,"squamous cell carcinoma, keratoacanthoma",8,squamous cell carcinoma,,,,,,Suggested group is uncertain.
+ddi,acquired-digital-fibrokeratoma,acquired digital fibrokeratoma,2,benign fibrous or soft tissue growth,,,,,,
+ddi,acrochordon,acrochordon,19,benign fibrous or soft tissue growth,,,,,,
+ddi,angioleiomyoma,angioleiomyoma,1,benign fibrous or soft tissue growth,,,,,,
+ddi,cellular-neurothekeoma,cellular neurothekeoma,1,benign fibrous or soft tissue growth,,,,,,
+ddi,dermatofibroma,dermatofibroma,22,benign fibrous or soft tissue growth,,,,,,
+ham10000,df,dermatofibroma,115,benign fibrous or soft tissue growth,,,,,,
+ddi,fibrous-papule,fibrous papule,2,benign fibrous or soft tissue growth,,,,,,
+ddi,keloid,keloid,1,benign fibrous or soft tissue growth,,,,,,Suggested group is uncertain.
+ddi,lipoma,lipoma,6,benign fibrous or soft tissue growth,,,,,,
+ddi,neurofibroma,neurofibroma,12,benign fibrous or soft tissue growth,,,,,,
+ddi,neuroma,neuroma,1,benign fibrous or soft tissue growth,,,,,,
+ddi,nevus-lipomatosus-superficialis,nevus lipomatosus superficialis,6,benign fibrous or soft tissue growth,,,,,,
+ddi,angioma,angioma,11,benign vascular lesion,,,,,,
+ddi,arteriovenous-hemangioma,arteriovenous hemangioma,3,benign vascular lesion,,,,,,
+ddi,glomangioma,glomangioma,1,benign vascular lesion,,,,,,
+ddi,pyogenic-granuloma,pyogenic granuloma,14,benign vascular lesion,,,,,,
+ham10000,vasc,vascular lesion,142,benign vascular lesion,,,,,,"Label combines angiomas, angiokeratomas, pyogenic granulomas and hemorrhage, which may not share a tier."
+ddi,condyloma-accuminatum,condyloma acuminatum,2,viral skin infection,,,,,,
+ddi,molluscum-contagiosum,molluscum contagiosum,6,viral skin infection,,,,,,
+ddi,verruca-vulgaris,verruca vulgaris,50,viral skin infection,,,,,,
+ddi,wart,wart,1,viral skin infection,,,,,,
+ddi,chondroid-syringoma,chondroid syringoma,1,benign cyst or adnexal tumour,,,,,,
+ddi,eccrine-poroma,eccrine poroma,10,benign cyst or adnexal tumour,,,,,,
+ddi,epidermal-cyst,epidermal cyst,35,benign cyst or adnexal tumour,,,,,,
+ddi,syringocystadenoma-papilliferum,syringocystadenoma papilliferum,2,benign cyst or adnexal tumour,,,,,,
+ddi,trichilemmoma,trichilemmoma,3,benign cyst or adnexal tumour,,,,,,
+ddi,trichofolliculoma,trichofolliculoma,2,benign cyst or adnexal tumour,,,,,,
+ddi,blastic-plasmacytoid-dendritic-cell-neoplasm,blastic plasmacytoid dendritic cell neoplasm,1,cutaneous lymphoma and leukaemia,,,,,,
+ddi,leukemia-cutis,leukemia cutis,1,cutaneous lymphoma and leukaemia,,,,,,
+ddi,mycosis-fungoides,mycosis fungoides,32,cutaneous lymphoma and leukaemia,,,,,,
+ddi,subcutaneous-t-cell-lymphoma,subcutaneous T-cell lymphoma,1,cutaneous lymphoma and leukaemia,,,,,,
+ddi,atypical-spindle-cell-nevus-of-reed,atypical spindle cell nevus of Reed,1,atypical melanocytic lesion,,,,,,DDI marks this label malignant. Suggested group is uncertain.
+ddi,dysplastic-nevus,dysplastic nevus,16,atypical melanocytic lesion,,,,,,
+ddi,pigmented-spindle-cell-nevus-of-reed,pigmented spindle cell nevus of Reed,1,atypical melanocytic lesion,,,,,,Suggested group is uncertain.
+ddi,acne-cystic,cystic acne,1,inflammatory rash,,,,,,
+ddi,eczema-spongiotic-dermatitis,"eczema, spongiotic dermatitis",4,inflammatory rash,,,,,,
+ddi,foreign-body-granuloma,foreign body granuloma,2,inflammatory rash,,,,,,Suggested group is uncertain.
+ddi,lymphocytic-infiltrations,lymphocytic infiltrations,1,inflammatory rash,,,,,,Suggested group is uncertain.
+ddi,prurigo-nodularis,prurigo nodularis,5,inflammatory rash,,,,,,
+ddi,reactive-lymphoid-hyperplasia,reactive lymphoid hyperplasia,1,inflammatory rash,,,,,,Suggested group is uncertain.
+ddi,kaposi-sarcoma,Kaposi sarcoma,6,other skin cancer,,,,,,
+ddi,metastatic-carcinoma,metastatic carcinoma,5,other skin cancer,,,,,,
+ddi,sebaceous-carcinoma,sebaceous carcinoma,1,other skin cancer,,,,,,
+ddi,abrasions-ulcerations-and-physical-injuries,"abrasions, ulcerations and physical injuries",3,injury or scar,,,,,,
+ddi,hematoma,hematoma,1,injury or scar,,,,,,
+ddi,scar,scar,2,injury or scar,,,,,,
+ddi,epidermal-nevus,epidermal nevus,1,other benign growth,,,,,,
+ddi,focal-acral-hyperkeratosis,focal acral hyperkeratosis,1,other benign growth,,,,,,
+ddi,verruciform-xanthoma,verruciform xanthoma,1,other benign growth,,,,,,Suggested group is uncertain.
+ddi,xanthogranuloma,xanthogranuloma,2,other benign growth,,,,,,
+ddi,dermatomyositis,dermatomyositis,1,autoimmune or systemic skin disease,,,,,,
+ddi,graft-vs-host-disease,graft-versus-host disease,2,autoimmune or systemic skin disease,,,,,,
+ddi,morphea,morphea,1,autoimmune or systemic skin disease,,,,,,
+ddi,coccidioidomycosis,coccidioidomycosis,1,fungal skin infection,,,,,,Suggested group is uncertain.
+ddi,onychomycosis,onychomycosis,2,fungal skin infection,,,,,,
+ddi,tinea-pedis,tinea pedis,1,fungal skin infection,,,,,,
+ddi,hyperpigmentation,hyperpigmentation,3,pigmentary change,,,,,,
+ddi,abscess,abscess,1,bacterial skin infection,,,,,,
+ddi,folliculitis,folliculitis,1,bacterial skin infection,,,,,,Suggested group is uncertain.

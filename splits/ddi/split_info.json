@@ -1,0 +1,11 @@
+{
+  "seed": 42,
+  "group_column": "DDI_file",
+  "external_test": true,
+  "images": {
+    "test": 656
+  },
+  "groups": {
+    "test": 656
+  }
+}

@@ -89,6 +89,9 @@ class SplitLogicTests(unittest.TestCase):
     def test_ddi_is_configured_as_external(self):
         self.assertTrue(DATASETS["ddi"].external_test)
 
+    def test_pad_ufes_is_grouped_by_patient(self):
+        self.assertEqual(DATASETS["pad-ufes-20"].group_column, "patient_id")
+
     def test_overlap_check_catches_a_shared_group(self):
         manifest = synthetic_manifest()
         splits = make_splits(manifest, HOSPITAL, 0)

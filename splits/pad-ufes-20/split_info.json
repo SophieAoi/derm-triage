@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "group_column": "patient_id",
+  "external_test": false,
+  "images": {
+    "train": 1633,
+    "val": 325,
+    "test": 340
+  },
+  "groups": {
+    "train": 963,
+    "val": 205,
+    "test": 205
+  }
+}

@@ -1,6 +1,10 @@
 # Datasets and raw images
 data/
 
+# Copyrighted reference documents
+data/reference/
+*.pdf
+
 # Python
 __pycache__/
 *.py[cod]
