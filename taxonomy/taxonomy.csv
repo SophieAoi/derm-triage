@@ -1,0 +1,8 @@
+source_label,condition_group,urgency_tier,rationale,source
+akiec,Actinic keratoses and intraepithelial carcinoma,,,
+bcc,Basal cell carcinoma,,,
+bkl,Benign keratosis-like lesions,,,
+df,Dermatofibroma,,,
+mel,Melanoma,,,
+nv,Melanocytic nevi,,,
+vasc,Vascular lesions,,,

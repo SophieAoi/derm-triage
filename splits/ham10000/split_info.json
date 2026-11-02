@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "group_column": "lesion_id",
+  "external_test": false,
+  "images": {
+    "train": 7037,
+    "val": 1491,
+    "test": 1487
+  },
+  "groups": {
+    "train": 5230,
+    "val": 1120,
+    "test": 1120
+  }
+}
