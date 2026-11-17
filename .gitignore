@@ -5,6 +5,9 @@ data/
 data/reference/
 *.pdf
 
+# Training runs (checkpoints are ~100 MB each)
+runs/
+
 # Python
 __pycache__/
 *.py[cod]
