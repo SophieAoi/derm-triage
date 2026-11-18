@@ -67,6 +67,12 @@ class TrainLoopTests(unittest.TestCase):
         second = metrics_without_time(self.run_training())
         self.assertEqual(first, second)
 
+    def test_runs_started_in_the_same_second_get_separate_folders(self):
+        from src.train import make_run_dir
+        runs = Path(self.runs.name)
+        first, second = make_run_dir(runs, "same"), make_run_dir(runs, "same")
+        self.assertEqual((first.name, second.name), ("same", "same_2"))
+
     def test_condition_target_trains(self):
         config = TrainConfig(**{**CONFIG.__dict__, "target": "condition", "epochs": 1})
         run_dir = self.run_training(config)

@@ -28,3 +28,9 @@ Rows not yet frozen are marked `provisional; <level>` in the confidence column, 
 Results will also be reported under two alternative mappings:
 - Cautious: bcc and akiec -> Urgent.
 - Relaxed: akiec -> Routine.
+
+# Uncertainty and calibration
+- Escalation rule: a case whose uncertainty (softmax entropy, or 1 - max softmax) is above a threshold goes to the Urgent tier for human review, whatever tier was predicted.
+- Temperature scaling uses a single scalar temperature fitted on the validation split.
+- Fitting the temperature and evaluating calibration on the same validation split is optimistic. Validation results after scaling must be reported as such.
+- The final temperature and escalation threshold must be chosen on the validation split and then applied unchanged to the test split. They must not be refitted or re-tuned on the test split.

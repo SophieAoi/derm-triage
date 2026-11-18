@@ -149,7 +149,20 @@ def run_name(config):
     return f"{stamp}_{config.dataset}_{config.target}_{config.arch}_seed{config.seed}"
 
 
-def train(config, data_dir=DATA_DIR, splits_dir=SPLITS_DIR, taxonomy_path=TAXONOMY_PATH, runs_dir=RUNS_DIR):
+def make_run_dir(runs_dir, name):
+    """Create a new run folder, adding _2, _3, ... if runs started in the same second."""
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    candidate, n = runs_dir / name, 1
+    while True:
+        try:
+            candidate.mkdir()
+            return candidate
+        except FileExistsError:
+            n += 1
+            candidate = runs_dir / f"{name}_{n}"
+
+
+def train(config,data_dir=DATA_DIR, splits_dir=SPLITS_DIR, taxonomy_path=TAXONOMY_PATH, runs_dir=RUNS_DIR):
     """Train one model and return the path of its run folder."""
     set_seed(config.seed)
     device = pick_device(config.device)
@@ -165,8 +178,7 @@ def train(config, data_dir=DATA_DIR, splits_dir=SPLITS_DIR, taxonomy_path=TAXONO
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.epochs)
 
-    run_dir = runs_dir / run_name(config)
-    run_dir.mkdir(parents=True)
+    run_dir = make_run_dir(runs_dir, run_name(config))
     (run_dir / "config.json").write_text(json.dumps({
         "config": asdict(config),
         "device": str(device),
