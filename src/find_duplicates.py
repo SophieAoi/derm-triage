@@ -106,6 +106,27 @@ def candidate_pairs(ids, phashes, embeds, max_hamming=CANDIDATE_MAX_HAMMING,
     return pd.DataFrame(rows, columns=["image_a", "image_b", "phash_distance", "cosine"])
 
 
+def duplicate_groups(ids, pairs):
+    """Group IDs so that any two images linked by a chain of pairs share a group.
+
+    Returns {image_id: group_id}; the group ID is the alphabetically first image in the
+    group, so it does not depend on pair order. Images with no pairs are their own group.
+    """
+    parent = {i: i for i in ids}
+
+    def root(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for a, b in pairs:
+        ra, rb = root(a), root(b)
+        if ra != rb:
+            parent[max(ra, rb)] = min(ra, rb)
+    return {i: root(i) for i in ids}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dataset", choices=sorted(DATASETS), default="fitzpatrick")

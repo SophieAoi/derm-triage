@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 from PIL import Image, ImageFilter
 
-from src.find_duplicates import candidate_pairs, hamming_matrix, perceptual_hash
+from src.find_duplicates import candidate_pairs, duplicate_groups, hamming_matrix, perceptual_hash
 
 
 def textured_image(seed, size=(300, 220)):
@@ -49,6 +49,22 @@ class CandidatePairTests(unittest.TestCase):
         pairs = candidate_pairs(ids, phashes, embeds, max_hamming=2, min_cosine=0.9, chunk=3)
         found = {(r.image_a, r.image_b) for r in pairs.itertuples()}
         self.assertEqual(found, {("a", "b"), ("c", "d")})
+
+
+class GroupTests(unittest.TestCase):
+    def test_chains_join_one_group(self):
+        groups = duplicate_groups(["a", "b", "c", "d", "e"], [("c", "b"), ("b", "a"), ("e", "d")])
+        self.assertEqual(groups, {"a": "a", "b": "a", "c": "a", "d": "d", "e": "d"})
+
+    def test_pair_order_does_not_matter(self):
+        ids = [f"img{i}" for i in range(20)]
+        pairs = [("img3", "img7"), ("img7", "img15"), ("img1", "img2"), ("img15", "img9")]
+        first = duplicate_groups(ids, pairs)
+        second = duplicate_groups(list(reversed(ids)), [(b, a) for a, b in reversed(pairs)])
+        self.assertEqual(first, second)
+
+    def test_unpaired_images_are_their_own_group(self):
+        self.assertEqual(duplicate_groups(["x", "y"], []), {"x": "x", "y": "y"})
 
 
 if __name__ == "__main__":
