@@ -31,6 +31,7 @@ if __package__ in (None, ""):
 
 from src.dataset import DATA_DIR, eval_transform  # noqa: E402
 from src.model import build_model  # noqa: E402
+from src.train import pick_device  # noqa: E402
 
 DATASETS = {
     # name: (metadata csv, image id column, image folder, file name pattern)
@@ -78,7 +79,7 @@ def embeddings(paths, device="cpu", batch_size=64):
     return torch.cat(out).numpy()
 
 
-def compute_features(paths):
+def compute_features(paths, device="auto"):
     file_hashes, phashes = [], []
     for n, path in enumerate(paths):
         file_hashes.append(file_hash(path))
@@ -86,7 +87,7 @@ def compute_features(paths):
             phashes.append(perceptual_hash(img))
         if n % 2000 == 0:
             print(f"  hashes {n}/{len(paths)}", flush=True)
-    return np.array(file_hashes), np.array(phashes, dtype=np.uint64), embeddings(paths)
+    return np.array(file_hashes), np.array(phashes, dtype=np.uint64), embeddings(paths, pick_device(device))
 
 
 def candidate_pairs(ids, phashes, embeds, max_hamming=CANDIDATE_MAX_HAMMING,
@@ -132,6 +133,7 @@ def main():
     parser.add_argument("--dataset", choices=sorted(DATASETS), default="fitzpatrick")
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
     parser.add_argument("--out-dir", type=Path)
+    parser.add_argument("--device", default="auto", help="auto, cpu, mps or cuda")
     args = parser.parse_args()
 
     metadata, id_column, image_dir, pattern = DATASETS[args.dataset]
@@ -141,7 +143,7 @@ def main():
     paths = [args.data_dir / image_dir / pattern.format(i) for i in ids]
 
     print(f"{len(ids)} images")
-    file_hashes, phashes, embeds = compute_features(paths)
+    file_hashes, phashes, embeds = compute_features(paths, args.device)
     np.savez_compressed(out_dir / "features.npz", ids=np.array(ids), file_hashes=file_hashes,
                         phashes=phashes, embeddings=embeds.astype(np.float16))
     pairs = candidate_pairs(ids, phashes, embeds)
