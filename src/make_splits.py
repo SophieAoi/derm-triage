@@ -30,6 +30,9 @@ class Dataset:
     group_column: str  # patient ID where the dataset has one, otherwise lesion ID
     label_column: str
     external_test: bool = False
+    # Optional CSV (relative to the data folder) with image_id and group_id columns.
+    # When set, group_column is read from this file instead of the metadata.
+    groups_file: str | None = None
 
 
 DATASETS = {
@@ -39,12 +42,25 @@ DATASETS = {
     "pad-ufes-20": Dataset("pad-ufes-20/metadata.csv", "img_id", "patient_id", "diagnostic"),
     # DDI has no patient or lesion ID, and it is never split, so each image is its own group.
     "ddi": Dataset("ddi/ddi_images/ddi_metadata.csv", "DDI_file", "DDI_file", "disease", external_test=True),
+    # Fitzpatrick17k has no patient or lesion ID. Near-duplicate groups (rule D in
+    # DOCUMENTATION.md, written by src/find_duplicates.py) are the strictest grouping available.
+    "fitzpatrick": Dataset("fitzpatrick/fitzpatrick17k.csv", "md5hash", "group_id", "label",
+                           groups_file="fitzpatrick/duplicates/groups.csv"),
 }
 
 
 def load_manifest(dataset, data_dir):
     """Return one row per image with image_id, group_id and label columns."""
     raw = pd.read_csv(data_dir / dataset.metadata, dtype=str)
+    if dataset.groups_file is not None:
+        groups = pd.read_csv(data_dir / dataset.groups_file, dtype=str)[["image_id", "group_id"]]
+        groups = groups.rename(columns={"image_id": dataset.image_column, "group_id": dataset.group_column})
+        unknown = set(groups[dataset.image_column]) - set(raw[dataset.image_column])
+        if unknown:
+            raise ValueError(f"{len(unknown)} images in {dataset.groups_file} are not in the metadata")
+        # A left join leaves group_id empty for any image the groups file misses;
+        # validate_manifest then rejects it rather than silently making it its own group.
+        raw = raw.merge(groups, on=dataset.image_column, how="left", validate="one_to_one")
     columns = {
         "image_id": raw[dataset.image_column],
         "group_id": raw[dataset.group_column],

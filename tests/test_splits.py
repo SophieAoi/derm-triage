@@ -1,6 +1,8 @@
 """Tests for the split code. Run from the repo root: python3 -m unittest discover -s tests"""
 
+import tempfile
 import unittest
+from pathlib import Path
 
 import pandas as pd
 
@@ -9,6 +11,7 @@ from src.make_splits import (
     REPO_ROOT,
     Dataset,
     check_no_overlap,
+    load_manifest,
     make_splits,
     validate_manifest,
 )
@@ -111,6 +114,56 @@ class SplitLogicTests(unittest.TestCase):
         manifest.loc[1, "image_id"] = manifest.loc[0, "image_id"]
         with self.assertRaisesRegex(ValueError, "repeated"):
             validate_manifest(manifest)
+
+
+class GroupsFileTests(unittest.TestCase):
+    """Datasets whose group IDs come from a separate file (Fitzpatrick17k duplicate groups)."""
+
+    DATASET = Dataset("meta.csv", "md5hash", "group_id", "label", groups_file="groups.csv")
+
+    def load(self, groups):
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp)
+            pd.DataFrame({"md5hash": ["a", "b", "c"], "label": ["x", "y", "x"]}).to_csv(
+                data_dir / "meta.csv", index=False)
+            pd.DataFrame(groups, columns=["image_id", "group_id", "group_size"]).to_csv(
+                data_dir / "groups.csv", index=False)
+            return load_manifest(self.DATASET, data_dir)
+
+    def test_group_ids_come_from_the_groups_file(self):
+        manifest = self.load([("a", "a", 2), ("b", "a", 2), ("c", "c", 1)])
+        self.assertEqual(manifest.set_index("image_id")["group_id"].to_dict(), {"a": "a", "b": "a", "c": "c"})
+        self.assertEqual(manifest.set_index("image_id")["label"].to_dict(), {"a": "x", "b": "y", "c": "x"})
+
+    def test_image_missing_from_groups_file_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "group_id"):
+            self.load([("a", "a", 1), ("b", "b", 1)])
+
+    def test_unknown_image_in_groups_file_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "not in the metadata"):
+            self.load([("a", "a", 1), ("b", "b", 1), ("c", "c", 1), ("z", "z", 1)])
+
+    def test_fitzpatrick_uses_duplicate_groups(self):
+        self.assertEqual(DATASETS["fitzpatrick"].groups_file, "fitzpatrick/duplicates/groups.csv")
+        self.assertFalse(DATASETS["fitzpatrick"].external_test)
+
+
+DUPLICATE_PAIRS = REPO_ROOT / "data" / "fitzpatrick" / "duplicates" / "candidate_pairs.csv"
+
+
+@unittest.skipUnless(DUPLICATE_PAIRS.is_file() and (SPLITS_DIR / "fitzpatrick").is_dir(),
+                     "Fitzpatrick duplicate pairs or splits not available")
+class FitzpatrickDuplicateLeakageTests(unittest.TestCase):
+    def test_no_rule_d_duplicate_pair_crosses_splits(self):
+        from src.find_duplicates import is_duplicate
+        where = {}
+        for split in ("train", "val", "test"):
+            for image in pd.read_csv(SPLITS_DIR / "fitzpatrick" / f"{split}.csv", dtype=str)["image_id"]:
+                where[image] = split
+        pairs = pd.read_csv(DUPLICATE_PAIRS, dtype={"image_a": str, "image_b": str})
+        pairs = pairs[is_duplicate(pairs)]
+        crossing = pairs[pairs["image_a"].map(where) != pairs["image_b"].map(where)]
+        self.assertEqual(len(crossing), 0)
 
 
 class SavedSplitTests(unittest.TestCase):

@@ -5,7 +5,17 @@ import unittest
 import numpy as np
 from PIL import Image, ImageFilter
 
-from src.find_duplicates import candidate_pairs, duplicate_groups, hamming_matrix, perceptual_hash
+import pandas as pd
+
+from src.find_duplicates import (
+    candidate_pairs,
+    conflict_tables,
+    duplicate_groups,
+    groups_table,
+    hamming_matrix,
+    is_duplicate,
+    perceptual_hash,
+)
 
 
 def textured_image(seed, size=(300, 220)):
@@ -65,6 +75,47 @@ class GroupTests(unittest.TestCase):
 
     def test_unpaired_images_are_their_own_group(self):
         self.assertEqual(duplicate_groups(["x", "y"], []), {"x": "x", "y": "y"})
+
+
+def pairs_frame(rows):
+    return pd.DataFrame(rows, columns=["image_a", "image_b", "phash_distance", "cosine"])
+
+
+class RuleDTests(unittest.TestCase):
+    def test_rule_boundaries(self):
+        pairs = pairs_frame([
+            ("a", "b", 30, 0.92),   # cosine at the limit: duplicate
+            ("a", "c", 30, 0.919),  # just below, hash far: not
+            ("a", "d", 10, 0.80),   # hash at the limit with cosine floor met: duplicate
+            ("a", "e", 10, 0.799),  # hash close but cosine below the floor: not
+            ("a", "f", 12, 0.90),   # hash just too far, cosine too low: not
+        ])
+        self.assertEqual(is_duplicate(pairs).tolist(), [True, False, True, False, False])
+
+    def test_groups_table_has_every_image_and_group_sizes(self):
+        pairs = pairs_frame([("a", "b", 2, 0.95), ("b", "c", 2, 0.95), ("d", "e", 30, 0.5)])
+        table = groups_table(["a", "b", "c", "d", "e"], pairs).set_index("image_id")
+        self.assertEqual(table["group_id"].to_dict(), {"a": "a", "b": "a", "c": "a", "d": "d", "e": "e"})
+        self.assertEqual(table["group_size"].to_dict(), {"a": 3, "b": 3, "c": 3, "d": 1, "e": 1})
+
+
+class ConflictTests(unittest.TestCase):
+    def test_only_near_certain_pairs_with_differences_are_listed(self):
+        metadata = pd.DataFrame({
+            "md5hash": ["a", "b", "c", "d"],
+            "label": ["melanoma", "lentigo maligna", "psoriasis", "psoriasis"],
+            "fitzpatrick_scale": ["2", "2", "3", "5"],
+            "url": ["u1", "u2", "u3", "u4"],
+        })
+        pairs = pairs_frame([
+            ("a", "b", 2, 0.99),   # near-certain, labels differ
+            ("c", "d", 0, 0.99),   # near-certain, skin types differ
+            ("a", "c", 12, 0.93),  # duplicate under rule D but not near-certain: not listed
+        ])
+        labels, skin = conflict_tables(pairs, metadata, "md5hash")
+        self.assertEqual(list(zip(labels["image_a"], labels["image_b"])), [("a", "b")])
+        self.assertEqual(list(zip(skin["image_a"], skin["image_b"])), [("c", "d")])
+        self.assertEqual(skin.iloc[0][["fitzpatrick_a", "fitzpatrick_b"]].tolist(), ["3", "5"])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "group_column": "group_id",
+  "external_test": false,
+  "images": {
+    "train": 11607,
+    "val": 2469,
+    "test": 2501
+  },
+  "groups": {
+    "train": 10165,
+    "val": 2188,
+    "test": 2188
+  }
+}

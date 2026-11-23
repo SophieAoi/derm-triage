@@ -7,12 +7,21 @@ Three signals, each saved so thresholds can be changed without recomputing:
     CNN embedding     ImageNet ResNet-50 features; high cosine similarity = crops, zooms or
                       other shots of the same lesion
 
+Duplicate rule (rule D, see DOCUMENTATION.md): a pair is a duplicate if
+    cosine >= 0.92, or pHash distance <= 10 and cosine >= 0.80.
+Duplicates are linked into groups (A~B and B~C puts A, B and C together) and each group
+is kept in one split. No image is removed and no label is changed.
+
 Outputs (in --out-dir, default data/<dataset>/duplicates/):
-    features.npz       file hashes, perceptual hashes and embeddings, in image_id order
-    candidate_pairs.csv every pair within the loose candidate limits below, with both scores
+    features.npz                   file hashes, perceptual hashes and embeddings, in image_id order
+    candidate_pairs.csv            every pair within the loose candidate limits, with both scores
+    groups.csv                     image_id, group_id, group_size for every image (rule D)
+    condition_label_conflicts.csv  near-certain duplicate pairs whose condition labels differ
+    skin_type_conflicts.csv        near-certain duplicate pairs whose Fitzpatrick types differ
 
 Usage:
-    python src/find_duplicates.py
+    python src/find_duplicates.py                  # compute everything
+    python src/find_duplicates.py --skip-features  # reuse candidate_pairs.csv, redo groups and lists
 """
 
 import argparse
@@ -40,6 +49,15 @@ DATASETS = {
 # Loose limits for writing candidate pairs; the duplicate rule itself is chosen afterwards.
 CANDIDATE_MAX_HAMMING = 16
 CANDIDATE_MIN_COSINE = 0.85
+
+# Rule D, chosen after visual review of sampled pairs (see DOCUMENTATION.md).
+DUPLICATE_MIN_COSINE = 0.92
+DUPLICATE_MAX_HAMMING = 10
+DUPLICATE_HAMMING_MIN_COSINE = 0.80  # stops pHash alone matching unrelated images
+
+# Pairs treated as near-certainly the same image, for the label-conflict lists only.
+CERTAIN_MAX_HAMMING = 4
+CERTAIN_MIN_COSINE = 0.98
 
 
 def file_hash(path):
@@ -128,27 +146,80 @@ def duplicate_groups(ids, pairs):
     return {i: root(i) for i in ids}
 
 
+def is_duplicate(pairs):
+    """Boolean mask of the candidate pairs that rule D counts as duplicates."""
+    return (pairs["cosine"] >= DUPLICATE_MIN_COSINE) | (
+        (pairs["phash_distance"] <= DUPLICATE_MAX_HAMMING) & (pairs["cosine"] >= DUPLICATE_HAMMING_MIN_COSINE))
+
+
+def is_near_certain(pairs):
+    return (pairs["phash_distance"] <= CERTAIN_MAX_HAMMING) | (pairs["cosine"] >= CERTAIN_MIN_COSINE)
+
+
+def groups_table(ids, pairs):
+    """One row per image: image_id, group_id, group_size, using rule D."""
+    dup = pairs[is_duplicate(pairs)]
+    groups = pd.Series(duplicate_groups(ids, zip(dup["image_a"], dup["image_b"])), name="group_id")
+    table = groups.rename_axis("image_id").reset_index()
+    table["group_size"] = table.groupby("group_id")["image_id"].transform("size")
+    return table
+
+
+def conflict_tables(pairs, metadata, id_column, label_column="label", skin_column="fitzpatrick_scale"):
+    """Near-certain duplicate pairs whose condition labels, or skin types, differ."""
+    meta = metadata.set_index(id_column)
+    sure = pairs[is_near_certain(pairs)].reset_index(drop=True)
+    for side in ("a", "b"):
+        rows = meta.loc[sure[f"image_{side}"]]
+        sure[f"label_{side}"] = rows[label_column].to_numpy()
+        sure[f"fitzpatrick_{side}"] = rows[skin_column].to_numpy()
+        sure[f"url_{side}"] = rows["url"].to_numpy() if "url" in rows else ""
+    columns = ["image_a", "image_b", "phash_distance", "cosine", "label_a", "label_b",
+               "fitzpatrick_a", "fitzpatrick_b", "url_a", "url_b"]
+    sure = sure[columns]
+    return sure[sure["label_a"] != sure["label_b"]], sure[sure["fitzpatrick_a"] != sure["fitzpatrick_b"]]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dataset", choices=sorted(DATASETS), default="fitzpatrick")
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
     parser.add_argument("--out-dir", type=Path)
     parser.add_argument("--device", default="auto", help="auto, cpu, mps or cuda")
+    parser.add_argument("--skip-features", action="store_true",
+                        help="reuse an existing candidate_pairs.csv instead of recomputing")
     args = parser.parse_args()
 
-    metadata, id_column, image_dir, pattern = DATASETS[args.dataset]
+    metadata_file, id_column, image_dir, pattern = DATASETS[args.dataset]
     out_dir = args.out_dir or args.data_dir / args.dataset / "duplicates"
     out_dir.mkdir(parents=True, exist_ok=True)
-    ids = sorted(pd.read_csv(args.data_dir / metadata, dtype=str)[id_column])
-    paths = [args.data_dir / image_dir / pattern.format(i) for i in ids]
-
+    metadata = pd.read_csv(args.data_dir / metadata_file, dtype=str)
+    ids = sorted(metadata[id_column])
     print(f"{len(ids)} images")
-    file_hashes, phashes, embeds = compute_features(paths, args.device)
-    np.savez_compressed(out_dir / "features.npz", ids=np.array(ids), file_hashes=file_hashes,
-                        phashes=phashes, embeddings=embeds.astype(np.float16))
-    pairs = candidate_pairs(ids, phashes, embeds)
-    pairs.to_csv(out_dir / "candidate_pairs.csv", index=False, float_format="%.5f")
-    print(f"{len(pairs)} candidate pairs saved to {out_dir}")
+
+    if args.skip_features:
+        pairs = pd.read_csv(out_dir / "candidate_pairs.csv", dtype={"image_a": str, "image_b": str})
+    else:
+        paths = [args.data_dir / image_dir / pattern.format(i) for i in ids]
+        file_hashes, phashes, embeds = compute_features(paths, args.device)
+        np.savez_compressed(out_dir / "features.npz", ids=np.array(ids), file_hashes=file_hashes,
+                            phashes=phashes, embeddings=embeds.astype(np.float16))
+        pairs = candidate_pairs(ids, phashes, embeds)
+        pairs.to_csv(out_dir / "candidate_pairs.csv", index=False, float_format="%.5f")
+    print(f"{len(pairs)} candidate pairs")
+
+    groups = groups_table(ids, pairs)
+    groups.to_csv(out_dir / "groups.csv", index=False)
+    in_groups = groups[groups["group_size"] > 1]
+    print(f"Rule D: {int(is_duplicate(pairs).sum())} duplicate pairs; {len(in_groups)} images in "
+          f"{in_groups['group_id'].nunique()} groups; largest group {groups['group_size'].max()}")
+
+    label_conflicts, skin_conflicts = conflict_tables(pairs, metadata, id_column)
+    label_conflicts.to_csv(out_dir / "condition_label_conflicts.csv", index=False, float_format="%.5f")
+    skin_conflicts.to_csv(out_dir / "skin_type_conflicts.csv", index=False, float_format="%.5f")
+    print(f"Near-certain duplicate pairs: {int(is_near_certain(pairs).sum())}; "
+          f"{len(label_conflicts)} with different condition labels, {len(skin_conflicts)} with different skin types")
+    print(f"Saved to {out_dir}")
 
 
 if __name__ == "__main__":
