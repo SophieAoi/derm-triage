@@ -5,6 +5,9 @@ data/
 data/reference/
 *.pdf
 
+# Private report notes
+docs/chapter3_facts.md
+
 # Training runs (checkpoints are ~100 MB each)
 runs/
 
